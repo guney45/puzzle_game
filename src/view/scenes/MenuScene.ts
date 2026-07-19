@@ -48,5 +48,21 @@ export class MenuScene extends Phaser.Scene {
     button.on('pointerup', () => {
       this.scene.start('GameScene');
     });
+
+    const settingsButtonY = buttonY + buttonHeight + 20;
+    const settingsButton = this.add
+      .rectangle(centerX, settingsButtonY, buttonWidth, 44, 0x3a3a4c)
+      .setInteractive({ useHandCursor: true });
+    this.add
+      .text(centerX, settingsButtonY, 'Settings', {
+        fontFamily: 'sans-serif',
+        fontSize: '18px',
+        color: '#ffffff',
+      })
+      .setOrigin(0.5);
+
+    settingsButton.on('pointerup', () => {
+      this.scene.start('SettingsScene');
+    });
   }
 }

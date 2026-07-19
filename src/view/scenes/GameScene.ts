@@ -4,7 +4,9 @@ import { GameEngine } from '../../core/engine';
 import { canPlace } from '../../core/placement';
 import { getPerk } from '../../core/perks/registry';
 import type { Coord, Hand, PerkId } from '../../core/types';
-import { getHighScore, saveHighScoreIfBetter } from '../../platform/storage.web';
+import { getHighScore, getSettings, saveHighScoreIfBetter, type Settings } from '../../platform/storage.web';
+import { AudioManager } from '../audio/audioManager';
+import { flashClearedCells, perkPickCelebration, shakeScreen, spawnComboText, spawnScorePopup } from '../fx/juice';
 import { computeLayout, readSafeAreaInsets, type GameLayout } from '../layout';
 import { BoardView } from '../render/boardView';
 import { drawPieceCells } from '../render/pieceView';
@@ -37,6 +39,8 @@ export class GameScene extends Phaser.Scene {
 
   private perkOverlay: Phaser.GameObjects.Container | null = null;
   private armedAbility: PerkId | null = null;
+  private settings!: Settings;
+  private audio!: AudioManager;
 
   constructor() {
     super('GameScene');
@@ -47,6 +51,8 @@ export class GameScene extends Phaser.Scene {
     this.layout = computeLayout(readSafeAreaInsets());
     this.colorGrid = Array.from({ length: GRID_SIZE }, () => Array<string | null>(GRID_SIZE).fill(null));
     this.highScore = getHighScore();
+    this.settings = getSettings();
+    this.audio = new AudioManager(this.settings.soundOn);
 
     this.createHud();
     this.boardView = new BoardView(this, this.layout);
@@ -163,6 +169,7 @@ export class GameScene extends Phaser.Scene {
       this.renderAbilityButtons();
       return;
     }
+    this.audio.ability();
     this.engine.useActiveAbility(perkId);
     this.afterEngineMutation();
   }
@@ -225,6 +232,7 @@ export class GameScene extends Phaser.Scene {
     if (cell.x < 0 || cell.x >= GRID_SIZE || cell.y < 0 || cell.y >= GRID_SIZE) return;
     const perkId = this.armedAbility;
     this.armedAbility = null;
+    this.audio.ability();
     this.engine.useActiveAbility(perkId, cell);
     this.afterEngineMutation();
   }
@@ -259,6 +267,21 @@ export class GameScene extends Phaser.Scene {
 
     for (const cell of result.placedCells) this.colorGrid[cell.y][cell.x] = piece.colorId;
     for (const cell of result.clearedCells) this.colorGrid[cell.y][cell.x] = null;
+
+    this.audio.place();
+    const popupPos = this.boardView.gridToScreen(origin);
+    spawnScorePopup(this, popupPos.x, popupPos.y, `+${result.scoreDelta}`, result.combo > 0 ? '#f1c40f' : '#ffffff');
+
+    if (result.combo > 0) {
+      flashClearedCells(this, this.boardView, result.clearedCells, this.layout, this.settings.reduceMotion);
+      if (result.combo >= 2) {
+        this.audio.combo(result.combo);
+        spawnComboText(this, this.layout, result.combo);
+        shakeScreen(this, this.settings.reduceMotion, result.combo);
+      } else {
+        this.audio.clear();
+      }
+    }
 
     this.afterEngineMutation();
 
@@ -350,6 +373,8 @@ export class GameScene extends Phaser.Scene {
         this.engine.choosePerk(perkId);
         overlay.destroy();
         this.perkOverlay = null;
+        this.audio.perkPick();
+        perkPickCelebration(this, this.layout);
         this.afterEngineMutation();
       });
     });
@@ -358,11 +383,20 @@ export class GameScene extends Phaser.Scene {
   }
 
   private handleGameOver(): void {
-    const score = this.engine.getState().score;
+    const state = this.engine.getState();
+    const score = state.score;
     const newHighScore = saveHighScoreIfBetter(score);
     const isNewHighScore = newHighScore === score && score > 0;
+    const perksTaken = state.activePerks.map((id) => getPerk(id)?.name ?? id);
+    this.audio.gameOver();
     this.time.delayedCall(400, () => {
-      this.scene.start('GameOverScene', { score, highScore: newHighScore, isNewHighScore });
+      this.scene.start('GameOverScene', {
+        score,
+        highScore: newHighScore,
+        isNewHighScore,
+        totalClears: state.totalClears,
+        perksTaken,
+      });
     });
   }
 }

@@ -3,6 +3,7 @@ import { BootScene } from './view/scenes/BootScene';
 import { MenuScene } from './view/scenes/MenuScene';
 import { GameScene } from './view/scenes/GameScene';
 import { GameOverScene } from './view/scenes/GameOverScene';
+import { SettingsScene } from './view/scenes/SettingsScene';
 import { DESIGN_WIDTH, DESIGN_HEIGHT } from './view/layout';
 
 // Portrait, safe-area-aware, DPR-crisp boot config (02 §2.12, 03 §3.1.1). The design canvas
@@ -21,7 +22,7 @@ const config: Phaser.Types.Core.GameConfig = {
     height: DESIGN_HEIGHT,
     zoom: window.devicePixelRatio || 1,
   },
-  scene: [BootScene, MenuScene, GameScene, GameOverScene],
+  scene: [BootScene, MenuScene, GameScene, GameOverScene, SettingsScene],
 };
 
 new Phaser.Game(config);

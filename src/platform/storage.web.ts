@@ -28,3 +28,34 @@ export function saveHighScoreIfBetter(score: number): number {
   }
   return current;
 }
+
+// Settings persistence (02 §2.11): sound/music toggles and reduce-motion, hardened in M5
+// alongside run-resume, but usable from M4 onward for the mute toggle and shake gating.
+export interface Settings {
+  soundOn: boolean;
+  musicOn: boolean;
+  reduceMotion: boolean;
+}
+
+const SETTINGS_KEY = 'puzzle-game:settings';
+
+const DEFAULT_SETTINGS: Settings = {
+  soundOn: true,
+  musicOn: true,
+  reduceMotion: false,
+};
+
+export function getSettings(): Settings {
+  const raw = webStorage.get(SETTINGS_KEY);
+  if (!raw) return { ...DEFAULT_SETTINGS };
+  try {
+    const parsed = JSON.parse(raw) as Partial<Settings>;
+    return { ...DEFAULT_SETTINGS, ...parsed };
+  } catch {
+    return { ...DEFAULT_SETTINGS };
+  }
+}
+
+export function saveSettings(settings: Settings): void {
+  webStorage.set(SETTINGS_KEY, JSON.stringify(settings));
+}

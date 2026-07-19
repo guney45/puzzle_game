@@ -45,4 +45,29 @@ test.describe('gameplay smoke (iPhone-12 viewport)', () => {
     await page.waitForTimeout(200);
     await expect(scoreDebug).not.toHaveAttribute('data-score', '0');
   });
+
+  // M4 AC: toggling mute (the Sound setting) persists across a reload (02 §2.11).
+  test('settings: toggling the sound mute persists across a reload', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForTimeout(400);
+
+    // MenuScene "Settings" button sits just below "Play" (195, 464 + 56 + 20 = 540).
+    await page.mouse.click(195, 540);
+    await page.waitForTimeout(200);
+
+    const settingsDebug = page.locator('#settings-debug');
+    await expect(settingsDebug).toHaveAttribute('data-sound', 'true');
+
+    // Sound is the first toggle row, centered at (390 - 32 - 36, 844 * 0.3) = (322, 253).
+    await page.mouse.click(322, 253);
+    await page.waitForTimeout(150);
+    await expect(settingsDebug).toHaveAttribute('data-sound', 'false');
+
+    await page.reload();
+    await page.waitForTimeout(400);
+    await page.mouse.click(195, 540);
+    await page.waitForTimeout(200);
+
+    await expect(page.locator('#settings-debug')).toHaveAttribute('data-sound', 'false');
+  });
 });
