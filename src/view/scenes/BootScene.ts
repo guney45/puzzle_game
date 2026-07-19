@@ -14,5 +14,8 @@ export class BootScene extends Phaser.Scene {
         color: '#ffffff',
       })
       .setOrigin(0.5);
+
+    // No assets to preload yet in M2; hand off to the main menu (02 §2.9 BOOT → MAIN_MENU).
+    this.time.delayedCall(150, () => this.scene.start('MenuScene'));
   }
 }

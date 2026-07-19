@@ -1,0 +1,52 @@
+import Phaser from 'phaser';
+import { getHighScore } from '../../platform/storage.web';
+import { computeLayout, readSafeAreaInsets } from '../layout';
+
+export class MenuScene extends Phaser.Scene {
+  constructor() {
+    super('MenuScene');
+  }
+
+  create(): void {
+    const layout = computeLayout(readSafeAreaInsets());
+    const centerX = layout.width / 2;
+
+    this.add
+      .text(centerX, layout.height * 0.32, 'Puzzle Game', {
+        fontFamily: 'sans-serif',
+        fontSize: '36px',
+        color: '#ffffff',
+        fontStyle: 'bold',
+      })
+      .setOrigin(0.5);
+
+    const highScore = getHighScore();
+    this.add
+      .text(centerX, layout.height * 0.32 + 44, `High Score: ${highScore}`, {
+        fontFamily: 'sans-serif',
+        fontSize: '18px',
+        color: '#c7c7d9',
+      })
+      .setOrigin(0.5);
+
+    const buttonWidth = 200;
+    const buttonHeight = 56;
+    const buttonY = layout.height * 0.55;
+
+    const button = this.add
+      .rectangle(centerX, buttonY, buttonWidth, buttonHeight, 0x4caf50)
+      .setInteractive({ useHandCursor: true });
+    this.add
+      .text(centerX, buttonY, 'Play', {
+        fontFamily: 'sans-serif',
+        fontSize: '24px',
+        color: '#ffffff',
+        fontStyle: 'bold',
+      })
+      .setOrigin(0.5);
+
+    button.on('pointerup', () => {
+      this.scene.start('GameScene');
+    });
+  }
+}
