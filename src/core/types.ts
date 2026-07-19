@@ -42,6 +42,7 @@ export interface RunState {
   rngState: number; // serializable seed/state for save+resume
   status: GameStatus;
   pendingPerkChoices?: PerkId[];
+  runCurrency?: number; // Greed perk (02 §2.7 #15); unused in MVP beyond display
 }
 
 export type GameEventType =

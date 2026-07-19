@@ -2,7 +2,15 @@ import Phaser from 'phaser';
 import { BOX_SIZE, GRID_SIZE } from '../../config/constants';
 import type { Coord, Grid } from '../../core/types';
 import type { GameLayout } from '../layout';
-import { BOX_LINE_COLOR, EMPTY_CELL_COLOR, GHOST_INVALID_COLOR, GHOST_VALID_COLOR, GRID_LINE_COLOR, colorForPiece } from './colors';
+import {
+  BOX_LINE_COLOR,
+  EMPTY_CELL_COLOR,
+  FILLED_DEFAULT_COLOR,
+  GHOST_INVALID_COLOR,
+  GHOST_VALID_COLOR,
+  GRID_LINE_COLOR,
+  colorForPiece,
+} from './colors';
 
 // Draws the 9×9 board (with 3×3 box separators), renders filled cells from core Grid state,
 // and shows a valid/invalid ghost preview while a piece is being dragged (02 §2.10, §2.12).
@@ -73,7 +81,7 @@ export class BoardView {
         const rect = this.cells[y][x];
         if (filled) {
           const colorId = colorAt(x, y);
-          rect.setFillStyle(colorId ? colorForPiece(colorId) : EMPTY_CELL_COLOR);
+          rect.setFillStyle(colorId ? colorForPiece(colorId) : FILLED_DEFAULT_COLOR);
           rect.setVisible(true);
         } else {
           rect.setVisible(false);

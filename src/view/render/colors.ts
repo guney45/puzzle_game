@@ -23,3 +23,6 @@ export const GRID_LINE_COLOR = 0x3f3f52;
 export const BOX_LINE_COLOR = 0x6f6f8c;
 export const GHOST_VALID_COLOR = 0x4caf50;
 export const GHOST_INVALID_COLOR = 0xe74c3c;
+// Fallback for cells a perk filled directly (e.g. Second Wind, Gap Filler) that have no
+// tracked piece color — distinct from EMPTY_CELL_COLOR so they don't look unfilled.
+export const FILLED_DEFAULT_COLOR = 0x777788;
