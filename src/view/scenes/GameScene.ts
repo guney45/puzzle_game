@@ -4,7 +4,15 @@ import { GameEngine } from '../../core/engine';
 import { canPlace } from '../../core/placement';
 import { getPerk } from '../../core/perks/registry';
 import type { Coord, Hand, PerkId } from '../../core/types';
-import { getHighScore, getSettings, saveHighScoreIfBetter, type Settings } from '../../platform/storage.web';
+import {
+  clearRunState,
+  getHighScore,
+  getSettings,
+  loadRunState,
+  saveHighScoreIfBetter,
+  saveRunState,
+  type Settings,
+} from '../../platform/storage.web';
 import { AudioManager } from '../audio/audioManager';
 import { flashClearedCells, perkPickCelebration, shakeScreen, spawnComboText, spawnScorePopup } from '../fx/juice';
 import { computeLayout, readSafeAreaInsets, type GameLayout } from '../layout';
@@ -15,6 +23,10 @@ interface TraySlot {
   root: Phaser.GameObjects.Container;
   zone: Phaser.GameObjects.Rectangle;
   index: number;
+}
+
+interface GameSceneData {
+  resume?: boolean;
 }
 
 // Wires touch drag-and-drop input to the core GameEngine and renders its state (03 §3.2:
@@ -41,18 +53,25 @@ export class GameScene extends Phaser.Scene {
   private armedAbility: PerkId | null = null;
   private settings!: Settings;
   private audio!: AudioManager;
+  private resumeData: GameSceneData = {};
 
   constructor() {
     super('GameScene');
   }
 
+  init(data: GameSceneData): void {
+    this.resumeData = data ?? {};
+  }
+
   create(): void {
-    this.engine = new GameEngine({ seed: Date.now() });
+    const saved = this.resumeData.resume ? loadRunState() : null;
+    this.engine = saved ? GameEngine.deserialize(saved) : new GameEngine({ seed: Date.now() });
     this.layout = computeLayout(readSafeAreaInsets());
     this.colorGrid = Array.from({ length: GRID_SIZE }, () => Array<string | null>(GRID_SIZE).fill(null));
     this.highScore = getHighScore();
     this.settings = getSettings();
     this.audio = new AudioManager(this.settings.soundOn);
+    this.saveRun();
 
     this.createHud();
     this.boardView = new BoardView(this, this.layout);
@@ -60,6 +79,10 @@ export class GameScene extends Phaser.Scene {
     this.renderTray();
     this.renderOwnedPerks();
     this.renderAbilityButtons();
+
+    if (this.engine.getState().status === 'perk_select') {
+      this.showPerkSelectOverlay(this.engine.getState().pendingPerkChoices ?? []);
+    }
 
     this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => this.onPointerDown(pointer));
     this.input.on('pointermove', (pointer: Phaser.Input.Pointer) => this.onPointerMove(pointer));
@@ -73,12 +96,14 @@ export class GameScene extends Phaser.Scene {
 
   private createHud(): void {
     const { hudTop, width } = this.layout;
-    this.scoreText = this.add.text(16, hudTop, 'Score: 0', {
+    const score = this.engine.getState().score;
+    this.scoreText = this.add.text(16, hudTop, `Score: ${score}`, {
       fontFamily: 'sans-serif',
       fontSize: '20px',
       color: '#ffffff',
       fontStyle: 'bold',
     });
+    if (score > this.highScore) this.highScore = score;
     this.highScoreText = this.add
       .text(width - 16, hudTop, `Best: ${this.highScore}`, {
         fontFamily: 'sans-serif',
@@ -92,6 +117,7 @@ export class GameScene extends Phaser.Scene {
       color: '#8fd694',
     });
     this.abilityButtonsRoot = this.add.container(0, 0);
+    document.getElementById('score-debug')?.setAttribute('data-score', String(score));
   }
 
   private renderBoard(): void {
@@ -100,13 +126,21 @@ export class GameScene extends Phaser.Scene {
   }
 
   private renderOwnedPerks(): void {
-    const activePerks = this.engine.getState().activePerks;
-    if (activePerks.length === 0) {
+    const state = this.engine.getState();
+    const goldSuffix =
+      state.activePerks.includes('greed') && (state.runCurrency ?? 0) > 0 ? ` — Gold: ${state.runCurrency}` : '';
+    if (state.activePerks.length === 0) {
       this.ownedPerksText.setText('');
       return;
     }
-    const names = activePerks.map((id) => getPerk(id)?.name ?? id);
-    this.ownedPerksText.setText(`Perks: ${names.join(', ')}`);
+    const names = state.activePerks.map((id) => getPerk(id)?.name ?? id);
+    this.ownedPerksText.setText(`Perks: ${names.join(', ')}${goldSuffix}`);
+  }
+
+  // Save/resume (03 §3.6): persist the full serialized RunState after every resolved turn
+  // so a reload can restore an identical board/hand/score/perks via "Continue" on the menu.
+  private saveRun(): void {
+    saveRunState(this.engine.serialize());
   }
 
   private isAbilityAvailable(perkId: PerkId): boolean {
@@ -308,6 +342,8 @@ export class GameScene extends Phaser.Scene {
 
     if (this.engine.getState().status === 'game_over') {
       this.handleGameOver();
+    } else {
+      this.saveRun();
     }
   }
 
@@ -388,6 +424,7 @@ export class GameScene extends Phaser.Scene {
     const newHighScore = saveHighScoreIfBetter(score);
     const isNewHighScore = newHighScore === score && score > 0;
     const perksTaken = state.activePerks.map((id) => getPerk(id)?.name ?? id);
+    clearRunState(); // a finished run should never offer a stale Continue
     this.audio.gameOver();
     this.time.delayedCall(400, () => {
       this.scene.start('GameOverScene', {

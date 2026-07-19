@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { getHighScore } from '../../platform/storage.web';
+import { getHighScore, hasSavedRun } from '../../platform/storage.web';
 import { computeLayout, readSafeAreaInsets } from '../layout';
 
 export class MenuScene extends Phaser.Scene {
@@ -31,13 +31,32 @@ export class MenuScene extends Phaser.Scene {
 
     const buttonWidth = 200;
     const buttonHeight = 56;
-    const buttonY = layout.height * 0.55;
+    let buttonY = layout.height * 0.55;
+
+    const canContinue = hasSavedRun();
+    if (canContinue) {
+      const continueButton = this.add
+        .rectangle(centerX, buttonY, buttonWidth, buttonHeight, 0x4a90e2)
+        .setInteractive({ useHandCursor: true });
+      this.add
+        .text(centerX, buttonY, 'Continue', {
+          fontFamily: 'sans-serif',
+          fontSize: '24px',
+          color: '#ffffff',
+          fontStyle: 'bold',
+        })
+        .setOrigin(0.5);
+      continueButton.on('pointerup', () => {
+        this.scene.start('GameScene', { resume: true });
+      });
+      buttonY += buttonHeight + 16;
+    }
 
     const button = this.add
       .rectangle(centerX, buttonY, buttonWidth, buttonHeight, 0x4caf50)
       .setInteractive({ useHandCursor: true });
     this.add
-      .text(centerX, buttonY, 'Play', {
+      .text(centerX, buttonY, canContinue ? 'New Game' : 'Play', {
         fontFamily: 'sans-serif',
         fontSize: '24px',
         color: '#ffffff',
@@ -46,7 +65,7 @@ export class MenuScene extends Phaser.Scene {
       .setOrigin(0.5);
 
     button.on('pointerup', () => {
-      this.scene.start('GameScene');
+      this.scene.start('GameScene', { resume: false });
     });
 
     const settingsButtonY = buttonY + buttonHeight + 20;

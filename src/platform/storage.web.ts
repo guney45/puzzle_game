@@ -59,3 +59,24 @@ export function getSettings(): Settings {
 export function saveSettings(settings: Settings): void {
   webStorage.set(SETTINGS_KEY, JSON.stringify(settings));
 }
+
+// Save/resume an in-progress run (03 §3.6): a serialized RunState (GameEngine.serialize(),
+// incl. RNG state) so a reload can restore an identical board/hand/score/perks. Saved after
+// each resolved turn; cleared on game-over so a finished run never offers a stale Continue.
+const RUN_KEY = 'puzzle-game:run';
+
+export function saveRunState(serialized: string): void {
+  webStorage.set(RUN_KEY, serialized);
+}
+
+export function loadRunState(): string | null {
+  return webStorage.get(RUN_KEY);
+}
+
+export function clearRunState(): void {
+  webStorage.remove(RUN_KEY);
+}
+
+export function hasSavedRun(): boolean {
+  return loadRunState() !== null;
+}

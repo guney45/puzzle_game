@@ -70,4 +70,36 @@ test.describe('gameplay smoke (iPhone-12 viewport)', () => {
 
     await expect(page.locator('#settings-debug')).toHaveAttribute('data-sound', 'false');
   });
+
+  // M5 AC: start a run, reload, hit Continue -> identical score restored (04 §M5).
+  test('save/resume: reloading and hitting Continue restores the in-progress score', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForTimeout(400);
+    await page.mouse.click(195, 464); // Play
+    await page.waitForTimeout(200);
+
+    const scoreDebug = page.locator('#score-debug');
+    const trayX = 72;
+    const trayY = 768;
+    const dropX = 35;
+    const dropY = 290;
+    await page.mouse.move(trayX, trayY);
+    await page.mouse.down();
+    await page.mouse.move((trayX + dropX) / 2, (trayY + dropY) / 2, { steps: 5 });
+    await page.mouse.move(dropX, dropY, { steps: 5 });
+    await page.mouse.up();
+    await page.waitForTimeout(200);
+
+    const scoreBeforeReload = await scoreDebug.getAttribute('data-score');
+    expect(scoreBeforeReload).not.toBe('0');
+
+    await page.reload();
+    await page.waitForTimeout(400);
+
+    // A saved run exists, so MenuScene's first button is "Continue" (195, 464).
+    await page.mouse.click(195, 464);
+    await page.waitForTimeout(300);
+
+    await expect(scoreDebug).toHaveAttribute('data-score', scoreBeforeReload!);
+  });
 });
