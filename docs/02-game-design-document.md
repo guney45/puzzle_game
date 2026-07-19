@@ -199,3 +199,25 @@ The genre lives or dies on feedback. Budgeted, concrete items:
 - Sound on/off, music on/off (music optional).
 - Reduce-motion toggle (disables shake/heavy particles).
 - Colorblind-friendly piece palette (distinct shapes/patterns, not color alone, for state).
+
+## 2.12 Mobile screen & orientation (iPhone 12 is the primary target)
+
+The first device this must look and feel right on is an **iPhone 12** (held in one hand).
+Design for it from M2 onward:
+
+- **Portrait, locked.** The whole game is portrait-only. Layout top→bottom: HUD (score / high
+  score / owned-perk strip) → the 9×9 board (the visual anchor, centered) → the 3-piece tray →
+  active-ability buttons if any.
+- **iPhone 12 geometry:** 390×844 pt logical (1170×2532 px @3×), 19.5:9 aspect, a **top notch**
+  and a **bottom home indicator**. Keep all interactive/important UI inside the **safe area** —
+  never under the notch or the home indicator. Use the CSS `env(safe-area-inset-*)` values
+  (see `03 §3.1.1`) and pad the HUD/tray accordingly.
+- **Responsive, not pixel-fixed.** Size the board as a share of available width and scale
+  everything from there, so it also fits taller/shorter phones later. Don't hardcode 390×844.
+- **Touch targets ≥ 44×44 pt** (Apple HIG). Tray pieces and buttons must be comfortably
+  thumb-tappable; the drag hit-area can be larger than the visible piece.
+- **Drag ergonomics for touch:** show the dragged piece **offset above the finger** so the
+  player can see the ghost preview and target cells (a finger covering the drop spot is the #1
+  block-puzzle usability complaint). Snap to grid; show valid/invalid ghost as in §2.10.
+- **No hover.** Everything must work with touch only (no mouse-hover affordances).
+- Test each visual milestone on the real iPhone via Safari/PWA before calling it done.

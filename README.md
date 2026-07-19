@@ -43,5 +43,11 @@ verified headlessly, with no browser and no "does it look right" guessing.
 clearing, combos, scoring, game-over detection, the roguelite perk system with ~15 perks,
 local high score + run save/resume, and enough "juice" (animation/sound) to feel good.
 
-**After MVP:** ads + IAP (AdMob via Capacitor), native Android build, store submission,
+**After MVP:** ads + IAP (AdMob via Capacitor), native **iOS** build, App Store submission,
 meta-progression. Explicitly out of MVP so we validate the fun first.
+
+**Target platform: iOS-first (iPhone 12).** Because the game is web-first, you playtest the whole
+MVP on your iPhone through **Safari / a home-screen PWA — no Mac or Apple Developer account needed**
+until the native App Store phase (M6). Android is deferred. See
+[`docs/03-technical-architecture.md §3.1.1`](docs/03-technical-architecture.md) for the two
+iPhone delivery paths.

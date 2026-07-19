@@ -67,8 +67,11 @@ path. Just anchor your expectations to "ship a good game and learn," not "get ri
 
 - Primary: casual puzzle players who already play Woodoku/Block Blast but want more depth.
 - Secondary: roguelite/strategy fans (Balatro/StS players) who like short, snackable runs.
-- Platform: mobile-first (Android first — cheaper/easier to publish than iOS), but the game
-  is built web-first so it also runs in a browser for instant playtesting and web release.
+- Platform: **iOS-first**. The developer tests on their own **iPhone 12** first; Android is
+  **deferred** (revisited only if the game graduates to a wider launch). Because the game is
+  built **web-first**, early iPhone testing happens in **mobile Safari / as a PWA** — no Mac,
+  no Xcode, no Apple Developer account needed until the native App Store phase (M6). See
+  `03-technical-architecture.md §3.1.1` for the two iPhone delivery paths.
 
 ## 1.4 Monetization strategy (kept OUT of MVP on purpose)
 
@@ -91,6 +94,17 @@ fun** (see roadmap M6). Planned model — hybrid casual:
 
 Tech for this (AdMob via Capacitor) is specced in `03-technical-architecture.md` and
 scheduled in M6 — the game logic stays completely independent of it.
+
+> **iOS specifics (because we ship to iPhone first):**
+> - **Ads:** AdMob on iOS requires an **App Tracking Transparency (ATT)** prompt and
+>   `SKAdNetwork` configuration in `Info.plist`. Non-personalized ads still serve if the user
+>   declines tracking, so revenue isn't zero — just lower CPMs.
+> - **IAP:** on iOS all in-app purchases go through **Apple StoreKit** (Apple takes ~15–30%).
+> - **Build/publish requirements:** a native iOS build needs a **Mac + Xcode**, and running on a
+>   physical iPhone / submitting to the App Store needs an **Apple Developer account ($99/yr)**.
+>   App Review is stricter than Google Play (expect a review pass before each release).
+> - **All of the above is M6+ only.** Testing the *gameplay* on your iPhone 12 needs none of it —
+>   Safari or a home-screen PWA is enough (see `03 §3.1.1`).
 
 ## 1.5 Success metrics (what "working" means)
 

@@ -6,9 +6,27 @@ each Sonnet session small and cheap, and makes regressions obvious.
 
 Legend — every milestone lists **Deliverables**, **Acceptance criteria (AC)**, and **Tests**.
 
+## Current status (as of this branch)
+
+- ✅ **M0 — Project scaffold** — completed & merged (PR #1): Vite + TS + Phaser 3, Vitest,
+  Playwright, the folder structure, `BootScene`, and package scripts are in place.
+- ⚠️ **M1 — Core engine** — **NOT on this branch yet.** The `src/core/*.ts` files are still empty
+  stubs (`export {};`) with no logic and no tests. If an M1 session was run with Sonnet, its work
+  was **not pushed/merged here** — verify and merge it before starting M2, because M2 renders the
+  engine and cannot proceed without it. (Don't take M2 until `npm test` shows real M1 unit tests
+  passing.)
+- ▶️ **M2 — Rendering & input** — next, **once M1 is actually merged.** This is the first
+  **iOS-relevant** milestone: from here on, design/verify against the **iPhone 12** (portrait, safe
+  areas, touch) and test on the real device via Safari/PWA (see `03 §3.1.1`).
+
+> **Platform note:** the target is now **iOS-first / iPhone 12** (Android deferred — see `01 §1.3`,
+> `03 §3.1.1`). This does **not** invalidate M0/M1: they are platform-neutral (Vite/TS/Phaser +
+> pure-logic core). The iOS orientation only affects the **view** (M2, M4) and **packaging/store**
+> (M6, M7) milestones, which are updated below.
+
 ---
 
-## M0 — Project scaffold
+## M0 — Project scaffold  ✅ done (merged, PR #1)
 
 **Deliverables**
 - Vite + TypeScript (strict) + Phaser 3 project. `index.html`, `src/main.ts` boot an empty
@@ -26,7 +44,7 @@ Legend — every milestone lists **Deliverables**, **Acceptance criteria (AC)**,
 
 ---
 
-## M1 — Core engine (pure logic, no rendering)
+## M1 — Core engine (pure logic, no rendering)  ⚠️ not on this branch yet (core files are stubs)
 
 The heart of the game. **No Phaser, no DOM.** All in `src/core/`, all unit-tested.
 
@@ -58,25 +76,36 @@ The heart of the game. **No Phaser, no DOM.** All in `src/core/`, all unit-teste
 
 ---
 
-## M2 — Rendering & input (playable, no perks yet)
+## M2 — Rendering & input (playable, no perks yet) — **first iOS-facing milestone**
+
+Build this for the **iPhone 12 in portrait** (`02 §2.12`, `03 §3.1.1`), and verify on the real
+device via Safari/PWA — not just a desktop browser window.
 
 **Deliverables**
+- **Portrait, safe-area-aware layout:** viewport meta (`viewport-fit=cover`), `env(safe-area-inset-*)`
+  padding, Phaser `Scale` portrait + `autoCenter`, DPR-aware (@3× crisp). HUD → board → tray, board
+  centered as the anchor.
+- **PWA shell:** `manifest.webmanifest` (standalone, portrait), Apple touch icons + `apple-mobile-web-app-capable`
+  meta, so "Add to Home Screen" gives a fullscreen app on the iPhone (`03 §3.1.1` Path A).
 - `GameScene`: draw the 9×9 grid (with visible 3×3 box separators), the 3-piece tray, and a HUD
   (score, high score).
-- Drag-and-drop: pick a tray piece, drag over the grid, show a **ghost preview** (valid = green,
-  invalid = red), drop to commit via `engine.tryPlace`. Snap to cells.
+- **Touch drag-and-drop:** pick a tray piece, drag over the grid, show a **ghost preview**
+  (valid = green, invalid = red) **offset above the finger** so the drop target is visible
+  (`02 §2.12`), drop to commit via `engine.tryPlace`. Snap to cells. Touch targets ≥ 44pt.
 - Render `PlaceResult`: fill placed cells, animate cleared cells (basic tween is fine for now),
   refill the tray, reflect score.
 - `MenuScene` (Play button → GameScene) and a minimal `GameOverScene` (score + Play Again).
 - `platform/storage.web.ts` + high-score persistence.
 
 **AC**
-- You can open the browser, play a real game start-to-finish, clear lines, and hit game-over.
-  It's not pretty yet, but it's fully playable and the score is correct.
+- On the **iPhone 12 (Safari or home-screen PWA)** you can play a real game start-to-finish, clear
+  lines, and hit game-over. UI sits inside the safe area (clear of notch + home indicator), pieces
+  are comfortably draggable with a thumb, and the score is correct. Desktop browser also works.
 
 **Tests**
 - Playwright smoke: load → place a scripted piece via drag → assert score/DOM/canvas state
-  changed. (E2E stays light; logic is covered by M1 units.)
+  changed. (E2E stays light; logic is covered by M1 units.) Optionally run one Playwright pass with
+  an iPhone-12 viewport/device profile to catch safe-area/layout regressions.
 
 ---
 
@@ -143,32 +172,47 @@ features.** Only move to M6 once you'd genuinely choose "Play Again." Consider s
 
 ---
 
-## M6 — Mobile packaging & monetization
+## M6 — iOS packaging & monetization  (**requires Mac + Xcode**)
+
+> **Prerequisites for this milestone:** a **Mac with Xcode**, and an **Apple Developer account
+> ($99/yr)** to run on a physical iPhone 12 / use TestFlight. If those aren't available yet, stay
+> on the Path-A web/PWA build (`03 §3.1.1`) and postpone M6. Android packaging is a *separate,
+> later* effort — not part of this milestone.
 
 **Deliverables**
-- Add Capacitor; configure Android project; verify the web build runs in the native shell.
+- Add Capacitor; `npx cap add ios`; verify the web build runs in the native iOS shell (simulator
+  first, then the real iPhone 12).
 - `storage.capacitor.ts` (Preferences) wired behind the storage interface.
 - `platform/ads.ts` AdMob implementation (`@capacitor-community/admob`) using **test ad unit
   ids**. Placements per `01 §1.4`: rewarded "Continue" at game-over, rewarded "Reroll perks",
   frequency-capped interstitial at game-over. Web keeps the no-op stub.
-- "Remove ads" IAP scaffold (can stub the store call until store setup).
+- **iOS ad/privacy config** (`03 §3.7`): ATT prompt before personalized ads,
+  `NSUserTrackingUsageDescription`, `GADApplicationIdentifier` + `SKAdNetworkItems` in `Info.plist`.
+- "Remove ads" IAP scaffold via **StoreKit** (can stub the store call until App Store Connect setup).
 
 **AC**
-- Native Android debug build installs and runs; test ads display; rewarded "Continue" grants its
-  reward; interstitial respects the frequency cap; web build unaffected (stub ads).
+- Native **iOS** debug build installs and runs on the iPhone 12; test ads display; rewarded
+  "Continue" grants its reward; interstitial respects the frequency cap; ATT prompt appears; web
+  build unaffected (stub ads).
 
 **Tests**: unit tests for ad-placement decision logic (cap timing, reward granting) with a mock Ads impl.
 
 ---
 
-## M7 — Store preparation & launch
+## M7 — App Store preparation & launch (iOS)
 
 **Deliverables**
-- App icon, adaptive icon, splash; store screenshots; short/long descriptions; privacy policy
-  (ads require one); content rating; real AdMob ad unit ids; signed release build.
-- Google Play internal/closed testing track; iterate on crash/feedback.
+- App icon (all required iOS sizes) + launch screen; App Store screenshots (iPhone 6.1"); app
+  name, subtitle, short/long descriptions, keywords; **privacy policy** (ads require one) +
+  **App Privacy "nutrition labels"** in App Store Connect; age rating; real AdMob ad unit ids.
+- Signed release build; **TestFlight** internal/external testing; iterate on crash/feedback; then
+  submit for **App Review**.
 
-**AC**: a signed release AAB uploaded to a Play testing track, installable by testers.
+**AC**: a signed release build uploaded to **TestFlight**, installable by testers; the build passes
+App Review for release.
+
+> **Android (deferred):** if the game proves worth a wider launch, Android is a later track of its
+> own — `npx cap add android`, Google Play Console, a signed AAB, internal testing. Not scoped here.
 
 ---
 

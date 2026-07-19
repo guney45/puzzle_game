@@ -69,12 +69,15 @@ the docs carry the context.
 > code goes in `src/core/` — **no Phaser, no DOM, no Math.random**. Write exhaustive Vitest tests
 > per M1's test list. Get typecheck + tests green, then commit. Do only M1."
 
-> **M2 — rendering & input**
+> **M2 — rendering & input** *(target: iPhone 12, portrait)*
 > "Implement **Milestone M2** (Phaser rendering + drag-drop input) from
 > `docs/04-implementation-roadmap.md`. The engine from M1 is the only game-logic source — the view
-> must call it and render its state (see `docs/03 §3.2`). Deliver GameScene (grid + tray + HUD),
-> drag-drop with ghost preview, MenuScene, minimal GameOverScene, and localStorage high score. Add
-> a Playwright smoke test. Green + commit. Do only M2."
+> must call it and render its state (see `docs/03 §3.2`). Build for **iPhone 12 in portrait** per
+> `docs/02 §2.12` and `docs/03 §3.1.1`: safe-area-aware layout, PWA shell (manifest + Apple meta,
+> Add-to-Home-Screen), touch drag with the ghost preview offset **above the finger**, ≥44pt touch
+> targets. Deliver GameScene (grid + tray + HUD), MenuScene, minimal GameOverScene, and localStorage
+> high score. Add a Playwright smoke test (optionally with an iPhone-12 device profile). Green +
+> commit. Do only M2."
 
 > **M3 — perk system**
 > "Implement **Milestone M3** (roguelite perk system) from `docs/04-implementation-roadmap.md`,
@@ -84,10 +87,13 @@ the docs carry the context.
 > (active-ability/currency perks + UI polish) across two sessions. Green + commit each. Do only M3
 > (or the stated sub-step)."
 
-> **M4 — juice** / **M5 — persistence** / **M6 — ads+Capacitor** / **M7 — store**
+> **M4 — juice** / **M5 — persistence** / **M6 — iOS ads+Capacitor** / **M7 — App Store**
 > "Implement **Milestone M<n>** from `docs/04-implementation-roadmap.md`, following its
 > Deliverables/AC/Tests and the referenced sections of `docs/02` and `docs/03`. Meet DoD, green,
 > commit. Do only M<n>."
+>
+> *(Reminder: M6/M7 are **iOS-first** and require a **Mac + Xcode + Apple Developer account**. If
+> those aren't available, stay on the web/PWA build and postpone them — see `docs/03 §3.1.1`.)*
 
 ## 5.7 If the agent gets stuck or finds an ambiguity
 

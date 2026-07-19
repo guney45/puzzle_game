@@ -9,7 +9,7 @@
 | Build tool / dev server | **Vite** | Instant HMR, TS-native, trivial to test and to build a static bundle Capacitor can wrap. |
 | Unit tests (logic) | **Vitest** | Same config as Vite; fast; runs the pure engine headlessly. |
 | E2E / smoke tests | **Playwright** | Headless Chromium is **preinstalled in this environment** — drives the real game in a browser. |
-| Mobile packaging | **Capacitor** (added in M6) | Wraps the web build into a native Android/iOS shell; rich plugin ecosystem incl. AdMob. |
+| Mobile packaging | **Capacitor** (M6) — **iOS first** | Wraps the web build into a native **iOS** shell (Android deferred); rich plugin ecosystem incl. AdMob. A native iOS build/release needs a **Mac + Xcode + Apple Developer account**. |
 | Ads (M6) | **AdMob** via `@capacitor-community/admob` | Rewarded + interstitial; the casual-puzzle standard. |
 | Persistence | `localStorage` (web) / **Capacitor Preferences** (native), behind one interface | Offline, no backend needed for MVP. |
 | Backend | **None** for MVP | Fully offline. Leaderboards/cloud-save are a deliberate later phase. |
@@ -21,11 +21,43 @@
   real UI headlessly. Unity/Godot/Flutter are far harder to build *and verify* unattended.
 - **Instant playtest + free web release.** `npm run dev` gives a shareable browser build in
   seconds; iterating on perk feel is fast.
-- **Still ships to stores.** Capacitor produces real native Android/iOS apps with ad SDKs.
+- **Still ships to stores.** Capacitor produces a real native **iOS** app (Android later) with
+  ad SDKs — and, being web-first, it also runs on the iPhone with **zero native tooling** during
+  development (next section).
 
 > Alternative if you dislike Phaser: plain HTML5 Canvas works for this static-grid game, but
 > you'd re-implement tweens/particles/audio/input by hand (more code, more bugs). Recommend
 > Phaser. **Whichever is chosen, the §3.3 pure-logic boundary is non-negotiable.**
+
+### 3.1.1 Getting onto the iPhone (two paths — this drives the whole workflow)
+
+The target device is an **iPhone 12**, and the plan is **iOS-first**. There are two distinct
+ways the game reaches the phone, and they have very different costs:
+
+**Path A — Web / PWA (development & playtesting; use this for all of M2–M5).**
+- Run `npm run dev` (or `npm run preview` on the production build) on the computer, then open the
+  dev server's LAN URL in **Safari on the iPhone 12** (both on the same Wi-Fi). Instant testing of
+  the real game on the real device.
+- Add a web app manifest + iOS meta tags so it can be **"Add to Home Screen"** as a fullscreen,
+  offline **PWA** that looks like an app. Required bits in `index.html` / `public/`:
+  - `<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">`
+  - `<meta name="apple-mobile-web-app-capable" content="yes">` and a status-bar-style meta
+  - `manifest.webmanifest` (name, icons, `display: standalone`, `orientation: portrait`, theme color)
+  - Apple touch icon(s) in `public/`
+  - CSS: honor `env(safe-area-inset-*)` so the board clears the notch/home indicator (see `02 §2.12`)
+  - Phaser `Scale` config: portrait, `Scale.FIT` (or `RESIZE`) + `autoCenter`, DPR-aware.
+- **Cost: zero.** No Mac, no Xcode, no Apple Developer account. This is where you validate "is it fun."
+- **Limits:** Safari/PWA can't show AdMob native ads or use StoreKit IAP — monetization needs Path B.
+
+**Path B — Native iOS via Capacitor (M6+, for ads/IAP and the App Store).**
+- `npx cap add ios` wraps the built web app; open in **Xcode**, run on the iPhone 12 or a simulator.
+- **Requires a Mac + Xcode**, and a physical-device install / App Store submission requires an
+  **Apple Developer account ($99/yr)**. Distribute test builds via **TestFlight**.
+- This is the only path that supports AdMob and StoreKit IAP. Scheduled in M6 — not before.
+
+> Practical implication: you can build and enjoy the entire MVP (M0–M5) on your iPhone with just a
+> browser. You only need Mac/Xcode/Apple-account once you decide to monetize and publish (M6/M7).
+> If you don't have a Mac, MVP is still fully doable; flag it before M6 so we plan the native step.
 
 ## 3.2 The architectural rule (most important thing in this repo)
 
@@ -221,15 +253,22 @@ class GameEngine {
 - `platform/ads.ts` defines `interface Ads { showRewarded(): Promise<'rewarded'|'dismissed'>;
   showInterstitial(): Promise<void>; init(): Promise<void>; }`.
 - MVP ships a **no-op web stub** that resolves instantly (so rewarded flows are testable without
-  a network). M6 adds the AdMob implementation for native builds and wires the placements from
-  `01-concept-and-strategy.md §1.4` (rewarded continue, reroll perks; capped interstitial at
-  game-over). Game logic never imports the ad SDK directly.
+  a network). M6 adds the AdMob implementation for the native **iOS** build and wires the
+  placements from `01-concept-and-strategy.md §1.4` (rewarded continue, reroll perks; capped
+  interstitial at game-over). Game logic never imports the ad SDK directly.
+- **iOS ad requirements (M6):** trigger the **App Tracking Transparency (ATT)** prompt before
+  requesting personalized ads, add the `NSUserTrackingUsageDescription` string and the AdMob
+  `GADApplicationIdentifier` + `SKAdNetworkItems` to `Info.plist`. The `Ads` interface stays the
+  same; only the native implementation and Xcode config differ.
 
 ## 3.8 Performance / targets
 
-- Target 60fps on mid-range Android. This game is trivial to render (≤81 cells + a few sprites),
-  so performance is a non-issue *if* animations use Phaser tweens/particles sanely and the VIEW
-  doesn't rebuild the whole scene per frame. Render from state on change, not every tick.
+- Target a smooth **60fps on iPhone 12** (its ProMotion-less display caps at 60Hz anyway) — and
+  by extension any lower-end phone later. This game is trivial to render (≤81 cells + a few
+  sprites), so performance is a non-issue *if* animations use Phaser tweens/particles sanely and
+  the VIEW doesn't rebuild the whole scene per frame. Render from state on change, not every tick.
+- Render at device pixel ratio (iPhone 12 is @3×) so the board looks crisp, but cap particle
+  counts so the reduce-motion path and older devices stay smooth.
 - Bundle: keep it small; Phaser is the main weight. Lazy-loading isn't needed for MVP.
 
 ## 3.9 Tooling & scripts (define in package.json)
