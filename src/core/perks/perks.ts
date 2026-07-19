@@ -35,7 +35,7 @@ interface CooldownState {
 const cornerMaster: Perk = {
   id: 'corner-master',
   name: 'Corner Master',
-  description: 'Placing a piece touching a board corner scores +10.',
+  description: 'Tahtanın köşesine değen bir parça yerleştirince +10 puan kazanırsın.',
   iconId: 'corner-master',
   onAfterPlace(piece, at, ctx) {
     const touchesCorner = piece.cells.some((offset) => {
@@ -50,7 +50,7 @@ const cornerMaster: Perk = {
 const comboFiend: Perk = {
   id: 'combo-fiend',
   name: 'Combo Fiend',
-  description: 'Combo multipliers are bumped up by one tier.',
+  description: 'Kombo çarpanları bir kademe artar.',
   iconId: 'combo-fiend',
   scoreModifier(base, ev) {
     if (ev.type === 'combo' && (ev.lineCount ?? 0) >= 2) {
@@ -64,7 +64,7 @@ const comboFiend: Perk = {
 const boxBonus: Perk = {
   id: 'box-bonus',
   name: 'Box Bonus',
-  description: 'Clearing a 3×3 box scores double.',
+  description: 'Bir 3×3 kutuyu temizlemek iki katı puan verir.',
   iconId: 'box-bonus',
   scoreModifier(base, ev) {
     if (ev.type === 'lineClear' && ev.lineKind === 'box') return base * 2;
@@ -76,7 +76,7 @@ const boxBonus: Perk = {
 const momentum: Perk = {
   id: 'momentum',
   name: 'Momentum',
-  description: 'Each consecutive clearing placement adds a stacking +5, reset by a whiff.',
+  description: 'Art arda temizleme yapan her yerleştirme +5 biriktirir; boşa giden hamlede sıfırlanır.',
   iconId: 'momentum',
   onClearResolved(result, ctx) {
     const state = (ctx.run.perkState['momentum'] as MomentumState | undefined) ?? { streak: 0 };
@@ -94,7 +94,7 @@ const momentum: Perk = {
 const fullHouse: Perk = {
   id: 'full-house',
   name: 'Full House',
-  description: 'Clear a row, a column, and a box in one move for a +200 jackpot.',
+  description: 'Tek hamlede bir satır, bir sütun ve bir kutuyu birlikte temizlersen +200 ikramiye kazanırsın.',
   iconId: 'full-house',
   onClearResolved(result, ctx) {
     const { rows, cols, boxes } = result.clearedLines;
@@ -106,7 +106,7 @@ const fullHouse: Perk = {
 const minimalist: Perk = {
   id: 'minimalist',
   name: 'Minimalist',
-  description: 'Every 4th piece dealt is a 1×1 single.',
+  description: 'Sana dağıtılan her 4. parça 1×1 tekli olur.',
   iconId: 'minimalist',
   onHandGenerate(hand, ctx) {
     const state = (ctx.run.perkState['minimalist'] as CounterState | undefined) ?? { count: 0 };
@@ -124,7 +124,7 @@ const minimalist: Perk = {
 const slimPickings: Perk = {
   id: 'slim-pickings',
   name: 'Slim Pickings',
-  description: 'You are never dealt the board-clogging 3×3 square.',
+  description: 'Tahtayı tıkayan 3×3 kare parçası artık sana hiç gelmez.',
   iconId: 'slim-pickings',
   onHandGenerate(hand, ctx) {
     const pool = PIECE_CATALOGUE.filter((p) => p.id !== 'square3x3');
@@ -136,7 +136,7 @@ const slimPickings: Perk = {
 const twinLines: Perk = {
   id: 'twin-lines',
   name: 'Twin Lines',
-  description: 'The deck is biased toward long line pieces (1×4 / 1×5).',
+  description: 'Destede uzun çizgi parçaları (1×4 / 1×5) daha sık çıkar.',
   iconId: 'twin-lines',
   onHandGenerate(hand, ctx) {
     return hand.map((piece) => {
@@ -153,7 +153,7 @@ const twinLines: Perk = {
 const freshHand: Perk = {
   id: 'fresh-hand',
   name: 'Fresh Hand',
-  description: 'Once per run: discard your current hand and deal a fresh 3.',
+  description: 'Koşu başına bir kez: elindeki parçaları at, yepyeni 3 parça al.',
   iconId: 'fresh-hand',
   hasActiveAbility: true,
   activeAbility(ctx) {
@@ -170,7 +170,7 @@ const freshHand: Perk = {
 const overflow: Perk = {
   id: 'overflow',
   name: 'Overflow',
-  description: 'Clearing a row also clears the row directly above it.',
+  description: 'Bir satırı temizlemek, hemen üstündeki satırı da temizler.',
   iconId: 'overflow',
   modifyClears(lines) {
     const rows = new Set(lines.rows);
@@ -185,7 +185,7 @@ const overflow: Perk = {
 const chainReaction: Perk = {
   id: 'chain-reaction',
   name: 'Chain Reaction',
-  description: 'A placement clearing 2+ lines also clears one nearly-full (8/9) line.',
+  description: '2 veya daha fazla satırı birden temizleyen bir hamle, neredeyse dolu (9\'da 8) bir satırı da temizler.',
   iconId: 'chain-reaction',
   modifyClears(lines, ctx) {
     const total = lines.rows.length + lines.cols.length + lines.boxes.length;
@@ -212,7 +212,7 @@ const chainReaction: Perk = {
 const secondWind: Perk = {
   id: 'second-wind',
   name: 'Second Wind',
-  description: 'Once per run: rotate the entire board 90°.',
+  description: 'Koşu başına bir kez: tüm tahtayı 90° döndürür.',
   iconId: 'second-wind',
   hasActiveAbility: true,
   activeAbility(ctx) {
@@ -235,7 +235,7 @@ const secondWind: Perk = {
 const bombDraw: Perk = {
   id: 'bomb-draw',
   name: 'Bomb Draw',
-  description: 'Destroy a single targeted cell. 3-turn cooldown after use.',
+  description: 'Seçtiğin tek bir hücreyi yok eder. Kullanınca 3 tur bekleme süresi başlar.',
   iconId: 'bomb-draw',
   hasActiveAbility: true,
   onAfterPlace(_piece, _at, ctx) {
@@ -260,7 +260,7 @@ const bombDraw: Perk = {
 const gapFiller: Perk = {
   id: 'gap-filler',
   name: 'Gap Filler',
-  description: 'Once per run: fill every empty cell fully enclosed by filled neighbors.',
+  description: 'Koşu başına bir kez: her yanı dolu hücrelerle çevrili boş hücreleri doldurur.',
   iconId: 'gap-filler',
   hasActiveAbility: true,
   activeAbility(ctx) {
@@ -290,7 +290,7 @@ const gapFiller: Perk = {
 const greed: Perk = {
   id: 'greed',
   name: 'Greed',
-  description: 'Clears grant a small amount of gold (spend it in a later update).',
+  description: 'Her temizlemede biraz altın kazanırsın (harcaması ileride gelecek).',
   iconId: 'greed',
   onClearResolved(result, ctx) {
     if (result.combo > 0) ctx.addCurrency(result.combo);
